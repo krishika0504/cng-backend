@@ -6,11 +6,12 @@ import { NextResponse } from 'next/server';
  */
 const RAW_ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS;
 const ALLOWED_ORIGINS = RAW_ALLOWED_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean) || [
-  'http://localhost:5173', // Vite dev server (admin-web)
+  // Vite dev server (admin-web)
   'http://localhost:3000', // Next.js
   'exp://10.202.200.65:8081', // Expo mobile app
   'https://cngbharat.com', // Production Frontend
   'https://www.cngbharat.com', // Production Frontend WWW
+  'https://cngmain.netlify.app', // Production Deploy
 ];
 
 const ALLOW_ALL_ORIGINS = ALLOWED_ORIGINS.includes('*');

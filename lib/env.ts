@@ -26,7 +26,7 @@ const requiredEnvVars = [
 const optionalEnvVars = {
   NODE_ENV: 'development',
   PORT: 3000,
-  ALLOWED_ORIGINS: 'https://cngbharat.com,https://www.cngbharat.com',
+  ALLOWED_ORIGINS: 'https://cngbharat.com,https://www.cngbharat.com,https://cngmain.netlify.app',
   GOOGLE_MAPS_API_KEY: '',
   RAZORPAY_WEBHOOK_SECRET: '',
 } as const;
