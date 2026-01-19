@@ -9,6 +9,8 @@ const ALLOWED_ORIGINS = RAW_ALLOWED_ORIGINS?.split(',').map((o) => o.trim()).fil
   'http://localhost:5173', // Vite dev server (admin-web)
   'http://localhost:3000', // Next.js
   'exp://10.202.200.65:8081', // Expo mobile app
+  'https://cngbharat.com', // Production Frontend
+  'https://www.cngbharat.com', // Production Frontend WWW
 ];
 
 const ALLOW_ALL_ORIGINS = ALLOWED_ORIGINS.includes('*');

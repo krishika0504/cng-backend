@@ -7,12 +7,12 @@ interface EnvConfig {
   // Required
   JWT_SECRET: string;
   DATABASE_URL: string;
-  
+
   // Optional with defaults
   NODE_ENV: 'development' | 'production' | 'test';
   PORT: number;
   ALLOWED_ORIGINS: string[];
-  
+
   // External services (optional)
   GOOGLE_MAPS_API_KEY?: string;
   RAZORPAY_WEBHOOK_SECRET?: string;
@@ -26,7 +26,7 @@ const requiredEnvVars = [
 const optionalEnvVars = {
   NODE_ENV: 'development',
   PORT: 3000,
-  ALLOWED_ORIGINS: 'http://localhost:5173,http://localhost:3000',
+  ALLOWED_ORIGINS: 'https://cngbharat.com,https://www.cngbharat.com',
   GOOGLE_MAPS_API_KEY: '',
   RAZORPAY_WEBHOOK_SECRET: '',
 } as const;
@@ -36,21 +36,21 @@ const optionalEnvVars = {
  */
 function validateEnv(): EnvConfig {
   const missing: string[] = [];
-  
+
   // Check required variables
   for (const key of requiredEnvVars) {
     if (!process.env[key]) {
       missing.push(key);
     }
   }
-  
+
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables:\n${missing.map(v => `  - ${v}`).join('\n')}\n\n` +
       `Please create a .env file with these variables or set them in your environment.`
     );
   }
-  
+
   // Validate JWT_SECRET strength
   const jwtSecret = process.env.JWT_SECRET!;
   if (jwtSecret.length < 32) {
@@ -62,7 +62,7 @@ function validateEnv(): EnvConfig {
       throw new Error('JWT_SECRET appears to be a weak/default value. Please use a strong random secret in production.');
     }
   }
-  
+
   return {
     JWT_SECRET: jwtSecret,
     DATABASE_URL: process.env.DATABASE_URL!,
