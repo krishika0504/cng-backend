@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server';
 const RAW_ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS;
 const ALLOWED_ORIGINS = RAW_ALLOWED_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean) || [
   // Vite dev server (admin-web)
- // Next.js
+  // Next.js
   'exp://10.202.200.65:8081', // Expo mobile app
   'https://cngbharat.com', // Production Frontend
   'https://www.cngbharat.com', // Production Frontend WWW
