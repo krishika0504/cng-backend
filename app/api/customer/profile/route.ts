@@ -21,7 +21,24 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      include: { vehicles: true },
+      include: {
+        vehicles: true,
+        sentReferrals: {
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          select: {
+            status: true,
+            createdAt: true,
+            referee: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -30,6 +47,9 @@ export async function GET(request: NextRequest) {
         { status: 401, headers: corsHeaders }
       );
     }
+
+    const pendingReferralCount = user.sentReferrals.filter((ref) => ref.status === 'pending').length;
+    const rewardedReferralCount = user.sentReferrals.filter((ref) => ref.status === 'rewarded').length;
 
     return NextResponse.json(
       {
@@ -42,6 +62,19 @@ export async function GET(request: NextRequest) {
           vehicles: user.vehicles,
           subscriptionType: user.subscriptionType,
           subscriptionEndsAt: user.subscriptionEndsAt,
+          referralCode: user.referralCode,
+          referralWalletPaise: user.referralWalletPaise,
+          referralLifetimeEarnedPaise: user.referralLifetimeEarnedPaise,
+          referralCount: user.referralCount,
+          hasReferred: user.sentReferrals.length > 0,
+          pendingReferralCount,
+          rewardedReferralCount,
+          recentReferrals: user.sentReferrals.map((ref) => ({
+            status: ref.status,
+            createdAt: ref.createdAt,
+            refereeName: ref.referee?.name,
+            refereeEmail: ref.referee?.email,
+          })),
         },
       },
       { status: 200, headers: corsHeaders }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
 import { PLAN_CONFIG } from '@/lib/subscription';
+import { applyReferralCommission } from '@/lib/referral';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
@@ -71,15 +72,19 @@ export async function POST(request: NextRequest) {
         // For free trial with auto-pay, set auto-renew to 1_month plan
         const autoRenewPlan = planType === 'free_trial' && autoPay ? '1_month' : (autoPay ? planType : null);
 
-        // Update user subscription
-        // NOTE: autoRenewPlan field requires migration - run: npx prisma migrate deploy
-        const updatedUser = await prisma.user.update({
-            where: { id: userId },
-            data: {
-                subscriptionType: planType,
-                subscriptionEndsAt: endDate,
-                // autoRenewPlan: autoRenewPlan, // Uncomment after migration is applied
-            },
+        // Update user subscription and apply referral commission in one transaction.
+        const updatedUser = await prisma.$transaction(async (tx) => {
+            const user = await tx.user.update({
+                where: { id: userId },
+                data: {
+                    subscriptionType: planType,
+                    subscriptionEndsAt: endDate,
+                    // autoRenewPlan: autoRenewPlan, // Uncomment after migration is applied
+                },
+            });
+
+            await applyReferralCommission(tx, userId, planType, plan.price);
+            return user;
         });
 
         // Log activity (optional, if you track sales)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import { applyReferralCommission } from '@/lib/referral';
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -82,19 +83,32 @@ export async function POST(request: NextRequest) {
         const endDate = new Date();
         endDate.setDate(startDate.getDate() + durationDays);
 
-        await prisma.user.update({
-            where: { id: userId },
-            data: {
-                subscriptionType: planType,
-                subscriptionEndsAt: endDate,
-            },
+        const referralReward = await prisma.$transaction(async (tx) => {
+            await tx.user.update({
+                where: { id: userId },
+                data: {
+                    subscriptionType: planType,
+                    subscriptionEndsAt: endDate,
+                },
+            });
+
+            return applyReferralCommission(tx, userId, planType, plan.price);
         });
 
         // Optional: Save transaction record
         // await prisma.payment.create({...})
 
         return NextResponse.json(
-            { message: 'Payment verified and subscription activated' },
+            {
+                message: 'Payment verified and subscription activated',
+                referralReward: referralReward
+                    ? {
+                        credited: true,
+                        commissionPaise: referralReward.commissionPaise,
+                        referrerId: referralReward.referrerId,
+                    }
+                    : { credited: false },
+            },
             { status: 200, headers: corsHeaders }
         );
 

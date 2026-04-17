@@ -73,9 +73,22 @@ export async function GET(request: NextRequest) {
                     updatedAt: true,
                     subscriptionType: true,
                     subscriptionEndsAt: true,
+                    referralCode: true,
+                    referralWalletPaise: true,
+                    referralLifetimeEarnedPaise: true,
+                    referralCount: true,
+                    referredBy: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            referralCode: true,
+                        },
+                    },
                     _count: {
                         select: {
                             vehicles: true,
+                            sentReferrals: true,
                         },
                     },
                 },

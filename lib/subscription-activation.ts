@@ -79,9 +79,9 @@ export async function activateSubscription(
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + plan.duration);
 
-    // Update owner subscription and payment history in a transaction
-    const [owner] = await prisma.$transaction([
-      prisma.stationOwner.update({
+    // Persist subscription state consistently across owner, payment history, and station subscriptions.
+    const owner = await prisma.$transaction(async (tx) => {
+      const updatedOwner = await tx.stationOwner.update({
         where: { id: ownerId },
         data: {
           subscriptionType: planId,
@@ -92,8 +92,9 @@ export async function activateSubscription(
           subscriptionType: true,
           subscriptionEndsAt: true,
         },
-      }),
-      prisma.paymentHistory.update({
+      });
+
+      await tx.paymentHistory.update({
         where: { razorpayOrderId },
         data: {
           razorpayPaymentId,
@@ -102,8 +103,36 @@ export async function activateSubscription(
           subscriptionStartsAt: now,
           subscriptionEndsAt: expiryDate,
         },
-      }),
-    ]);
+      });
+
+      const ownerStations = await tx.station.findMany({
+        where: { ownerId },
+        select: { id: true },
+      });
+
+      if (ownerStations.length > 0) {
+        await tx.subscription.updateMany({
+          where: {
+            stationId: { in: ownerStations.map((station) => station.id) },
+            status: 'active',
+          },
+          data: { status: 'expired' },
+        });
+
+        await tx.subscription.createMany({
+          data: ownerStations.map((station) => ({
+            stationId: station.id,
+            planType: planId,
+            startDate: now,
+            endDate: expiryDate,
+            amount: plan.price,
+            status: 'active',
+          })),
+        });
+      }
+
+      return updatedOwner;
+    });
 
     // Create activity log
     await prisma.activityLog.create({
